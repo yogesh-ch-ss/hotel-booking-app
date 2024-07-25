@@ -29,5 +29,6 @@ userSchema.pre("save", async function (next) {
 
 // creating a User model with the defined user schema, with type UserType
 const User = mongoose.model<UserType>("User", userSchema);
+// mongoose creates a collection with lowercased plural version of the model name => users; can be viewed in mongodb atlas
 
 export default User;

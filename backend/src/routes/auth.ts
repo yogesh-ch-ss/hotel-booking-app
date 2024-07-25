@@ -1,17 +1,15 @@
 import express, { Request, Response } from "express";
-import User from "../models/user";
-import jwt from "jsonwebtoken";
 import { check, validationResult } from "express-validator";
+import User from "../models/user";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const router = express.Router();
 
-// register new user
-// /api/users/register
+// /routes/auth/login
 router.post(
-  "/register",
+  "/login",
   [
-    check("firstName", "First Name is required").isString(),
-    check("lastName", "Last Name is required").isString(),
     check("email", "Email is required").isEmail(),
     check("password", "Password with 6 or more characters required").isLength({
       min: 6,
@@ -24,19 +22,20 @@ router.post(
       return res.status(400).json({ message: errors.array() });
     }
 
-    try {
-      // find if a user exists for the email address
-      let user = await User.findOne({
-        email: req.body.email,
-      });
+    const { email, password } = req.body; // destructuring
 
-      if (user) {
-        return res.status(400).json({ message: "User already exists" });
+    try {
+      const user = await User.findOne({ email: req.body.email });
+      if (!user) {
+        return res.status(400).json({ message: "Invalid Credentials" });
       }
 
-      // create and save a user from the received request
-      user = new User(req.body);
-      await user.save();
+      //   compare if the password matches in the database
+      const isMatch = await bcrypt.compare(password, user.password);
+
+      if (!isMatch) {
+        return res.status(400).json({ message: "Invalid Credentials" });
+      }
 
       const token = jwt.sign(
         { userId: user.id }, // Payload: Data you want to encode in the token
@@ -50,7 +49,7 @@ router.post(
         maxAge: 86400000,
       });
 
-      return res.sendStatus(200);
+      res.status(200).json({ userId: user._id });
     } catch (error) {
       console.log(error);
       res.status(500).send({ message: "Something went wrong" });
