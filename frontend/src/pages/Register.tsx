@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useMutation } from "react-query";
 
 import * as apiClient from "../api-client";
+import { useAppContext } from "../contexts/AppContext";
 
 // type for our form as we are using typescript
 export type RegisterFormData = {
@@ -13,6 +14,10 @@ export type RegisterFormData = {
 };
 
 const Register = () => {
+  // importing the context to use it here
+  const { showToast } = useAppContext();
+
+  // register is used to register an input field with the form and to provide validation rules (ex: {required : "..."})
   const {
     register,
     watch,
@@ -23,11 +28,11 @@ const Register = () => {
   //   useMutation is used to perform operations that cause changes, like creating a new user, updating a post, or deleting an item.
   const mutation = useMutation(apiClient.register, {
     onSuccess: () => {
-      console.log("registration successful");
+      showToast({ message: "Registration is successful!", type: "SUCCESS" });
     },
     onError: (error: Error) => {
       // error is obtained whrn the api-client throws an Error
-      console.log(error.message);
+      showToast({ message: error.message, type: "ERROR" });
     },
   });
 
